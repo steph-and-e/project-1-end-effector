@@ -2,6 +2,8 @@
 import random
 import time
 import bcrypt
+import os
+import csv
 
 ## HELPER FUNCTION
 def print_colour(colour, text):
@@ -19,26 +21,60 @@ def sign_up():
     """
     """
     print_colour("blue", "\n\n\nSIGN UP")
-    # ask user to create new userid
-    userid = input("Please create a new userid: ")
-    # ask user to create new password
-    password = input("Please create a password: ")
-    # encrypt the password
-    hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt() ).decode('utf-8')
-    # write new user to users.csv
-    file = open("users.csv", "w")
-    file.write(f"{userid}, {hash}")
-    file.close()
+    users_file = "users.csv"
+    ## Create CSV file with header if it does not exist
+    if not os.path.exists(users_file):
+        with open(users_file, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["userid", "encrypted_password"])
+    ## Prompt user
+    userid = input("Enter a new userid: ").strip() #removes extra space
+    password = input("Enter a new password: ").strip()
+
+    ## Check if userid already exists
+    with open(users_file) as file:
+        reader = csv.reader(file)
+        next(reader)  # skip header
+
+        for row in reader:
+            if row and row[0] == userid:
+                print("User ID already exists")
+                return
+
+    ## Check password length first (as in flowchart)
+    if len(password) < 6:
+        print("Password too short!")
+        return
+
+    ## Check password rules
+    # 'for c in password' means check every letter in the system
+    capital = any(c.isupper() for c in password)
+    lower = any(c.islower() for c in password)
+    digit = any(c.isdigit() for c in password)
+    special_chars = "!.@#$%^&*()_[]"
+    special = any(c in special_chars for c in password)
+
+    if not (capital and lower and digit and special):
+        print("Password Invalid. Include spedcial letters in your password.")
+        return
+
+    ## Encrypt password
+    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+    ## Save userid and hashed password
+    with open(users_file, "a", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow([userid, hashed])
+
+    print("Account created Successfully")
 
 ## AUTHENTICATE FUNCTION
 def authenticate():
     """
-    Logs the user in, creating an account first if needed.
-
-    Prompts the user for userid and password, then checks them against bcrypt-hashed passwords in users.csv.
-    Repeats until valid credentials are entered.
-
-    Returns: userid upon successful login
+    - Logs the user in, creating an account first if needed.
+    - Prompts the user for userid and password, then checks them against bcrypt-hashed passwords in users.csv.
+      Repeats until valid credentials are entered.
+    - Returns: userid upon successful login
     """
     print_colour("blue", "\n\n\nAUTHENTICATION")
 
@@ -84,7 +120,7 @@ def authenticate():
         if not found:
             print_colour("red", "Userid not found. Please try again.")
 
-        # close file
+        # Close file
         file.close()
             
 ## LOOKUP PRODUCTS FUNCTION
@@ -141,7 +177,7 @@ def customer_summary(userid: str):
     try:
         f = open(filename, 'r') # trys to open the file (if exists)
     except:
-        # error is thrown if dile doesn't exist
+        # error is thrown if file doesn't exist
         print("File not found, unable to retrieve order history")
     else:
 
@@ -209,6 +245,39 @@ def main():
     iv.	Return Value: None
 
     """
-    pass
+    # Get userid from authenticate function
+    userid = authenticate()
 
-customer_summary("test")
+    # Run warehouse system until user decides to quit
+    shouldContinue = True
+    while shouldContinue:
+        # Display Menu
+        print_colour("blue", "\n\n\nWELCOME TO THE WAREHOUSE!")
+        print("[1] Order Items")
+        print("[2] Quit")
+        try:
+            userChoice = int(input(""))
+        except TypeError:
+           print("Please enter the number corresponding to the option :D")
+        else:
+            if userChoice == 1:
+                print("please scan a barcode...")
+                orderString = scan_barcode() #TODO: Change to proper function
+                orderList = lookup_products(orderString) #TODO: Change to proper function
+                pack_products(orderList)#TODO: Change to proper function
+                #y
+                # complete_order(userid, orderList)#TODO: Change to proper function
+            elif userChoice == 2:
+                # user chooses to exit
+                print("quitting warehouse program...")
+                shouldContinue = False
+            else:
+                print("You didn't enter a valid number, please try again") 
+        
+    print("Thank you for using our warehouse system :D")
+    customer_summary(userid)
+
+def scan_barcode():
+    return ""
+
+main()
