@@ -87,8 +87,6 @@ def authenticate():
         # close file
         file.close()
             
-authenticate()
-
 ## LOOKUP PRODUCTS FUNCTION
 def lookup_products(productNames):
     """Reads products.csv, and compares it to a string of scanned items it recieves from a user. Prints a warning message if item scanned is not in products.csv, and returns a list of product names with their prices that match the scanned string"""
@@ -175,12 +173,32 @@ def customer_summary(userid: str):
         s += "===================================\n"
         for i in range(len(output_list_products)):
             s += f"{output_list_products[i]}{output_list_quantity[i]:>30}\n"
+        s += "===================================\n"
         print(s)
 
-def pack_products():
+def pack_products(products_list):
     """
     """
-    pass
+    # Iterate through product list
+    for product_row in products_list:
+        # Get product name from the product-price pair
+        product_name = product_row[0]
+        # Execute appropriate Q-arm movements depending on product
+        if product_name == "Sponge":
+            print_colour("green", "Successfully packed Sponge!")
+        elif product_name == "Bottle":
+            print_colour("green", "Successfully packed Bottle!")
+        elif product_name == "Rook":
+            print_colour("green", "Successfully packed Rook!")
+        elif product_name == "D12":
+            print_colour("green", "Successfully packed D12!")
+        elif product_name == "Bowl":
+            print_colour("green", "Successfully packed Bowl!")
+        elif product_name == "WitchHat":
+            print_colour("green", "Successfully packed WitchHat!")
+        else:
+            print_colour("red", f"{product_name} not in directory!")
+
 
 def main():
     """
@@ -192,3 +210,5 @@ def main():
 
     """
     pass
+
+customer_summary("test")
