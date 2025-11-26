@@ -1,9 +1,8 @@
 # import modules
-import random
 import time
 import bcrypt
-import os
-import csv
+
+
 
 ## HELPER FUNCTION
 def print_colour(colour, text):
@@ -16,57 +15,59 @@ def print_colour(colour, text):
     print("\033[37m", end="") # prints empty white line to reset colour
 
 
+
 ## SIGN UP FUNCTION
 def sign_up():
     """
     """
     print_colour("blue", "\n\n\nSIGN UP")
-    users_file = "users.csv"
-    ## Create CSV file with header if it does not exist
-    if not os.path.exists(users_file):
-        with open(users_file, "w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(["userid", "encrypted_password"])
-    ## Prompt user
-    userid = input("Enter a new userid: ").strip() #removes extra space
-    password = input("Enter a new password: ").strip()
 
-    ## Check if userid already exists
-    with open(users_file) as file:
-        reader = csv.reader(file)
-        next(reader)  # skip header
+    # Loop until successful signup
+    while True:
 
-        for row in reader:
-            if row and row[0] == userid:
-                print("User ID already exists")
-                return
+        # Ask user for new userid and password
+        userid = input("Enter a new userid: ").strip()
+        password = input("Enter a new password: ").strip()
 
-    ## Check password length first (as in flowchart)
-    if len(password) < 6:
-        print("Password too short!")
-        return
+        # Check if userid already exists
+        file = open("users.csv", "r")
+        existing_users = []
+        for line in file:
+            row = line.split(",")
+            stored_userid = row[0]
+            existing_users.append(stored_userid)
+        if userid in existing_users:
+            print_colour("red", "UserID already exists. Please try again.\n")
+            continue # skip remaining code, go back to beginning of while loop
+        file.close()
 
-    ## Check password rules
-    # 'for c in password' means check every letter in the system
-    capital = any(c.isupper() for c in password)
-    lower = any(c.islower() for c in password)
-    digit = any(c.isdigit() for c in password)
-    special_chars = "!.@#$%^&*()_[]"
-    special = any(c in special_chars for c in password)
+        # Check password length
+        if len(password) < 6:
+            print_colour("red", "Password must be 6 chars or longer! Please try again.\n")
+            continue # skip remaining code, go back to beginning of while loop
 
-    if not (capital and lower and digit and special):
-        print("Password Invalid. Include spedcial letters in your password.")
-        return
+        # Check that password contains all required characters
+        capital = any(c.isupper() for c in password) 
+        lower = any(c.islower() for c in password)
+        digit = any(c.isdigit() for c in password)
+        special_chars = "!.@#$%^&*()_[]"
+        special = any(c in special_chars for c in password)
+        if not (capital and lower and digit and special):
+            print_colour("red", "Password invalid. Make sure your password includes at least one uppercase, one lowercase, one number, and one specoal character.\n")
+            continue # skip remaining code, go back to beginning of while loop
 
-    ## Encrypt password
-    hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+        # If user gets here, the signup input has passed all checks
+        # Encrypt password
+        hashed = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
-    ## Save userid and hashed password
-    with open(users_file, "a", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow([userid, hashed])
+        # Save userid and hashed password
+        file = open("users.csv", "a") # Append mode: creates new csv if file doesn't exist
+        file.write(f"{userid}, {hashed}\n") # Write user id and password on new line
+        file.close()
+        print_colour("green","Account created successfully!")
+        return # Exit out of function
 
-    print("Account created Successfully")
+
 
 ## AUTHENTICATE FUNCTION
 def authenticate():
@@ -93,7 +94,7 @@ def authenticate():
     # Loop until successful authentication
     while True:
         # Ask user to enter userid and password
-        userid = input("\nPlease enter your userid: ").strip()
+        userid = input("Please enter your userid: ").strip()
         password = input("Please enter your password: ").strip()
         
         # Try to find userid in users.csv
@@ -101,6 +102,8 @@ def authenticate():
         file = open("users.csv", "r")
         for line in file:
             row = line.split(",")
+            if len(row) < 2: # If row is incorrectly formatted, skip and go to next line
+                continue
             stored_userid = row[0]
             stored_hash = row[1].strip()
             # If userid matches, check if password matches
@@ -110,48 +113,60 @@ def authenticate():
                 if bcrypt.checkpw(password.encode('utf-8'),
                                       stored_hash.encode('utf-8')):
                     print_colour("green", "Login successful!")
+                    file.close()
                     return userid
                 # Password does not match --> Try again
                 else:
-                    print_colour("red", "Incorrect password. Please try again.")
+                    print_colour("red", "Incorrect password. Please try again.\n")
                     break # break out of for loop, stay in while loop
 
         # Userid does not match --> Try again
         if not found:
-            print_colour("red", "Userid not found. Please try again.")
+            print_colour("red", "Userid not found. Please try again.\n")
 
         # Close file
         file.close()
             
+
+
 ## LOOKUP PRODUCTS FUNCTION
 def lookup_products(productNames):
-    """Reads products.csv, and compares it to a string of scanned items it recieves from a user. Prints a warning message if item scanned is not in products.csv, and returns a list of product names with their prices that match the scanned string"""
+    """
+    - Reads products.csv, and compares it to a string of scanned items it recieves from a user.
+    - Prints a warning message if item scanned is not in products.csv
+    - Returns a list of product names with their prices that match the scanned string
+    """
 
+    # Initialize empty lists
     fileList = []
     productList = []
     finalList = []
 
-    productNames = productNames.replace(' and ', ',')
-    productNames = productNames.replace(', ', ',')# replace space-comma with comma
-    productList = productNames.split(",")
+    # Split product string into a list
+    productList = productNames.split() # Splits on whitespace
 
+    # 
     file = open("products.csv")
-    for product in file: #Turns the string from file into a two by two list
+    for product in file: # Turns the string from file into a two by two list
         product = product.strip()
         product = product.split(",")
         product[1] = float(product[1]) #Turns the string number into a float
         fileList.append(product)
     file.close()
 
-    for i in range (len(productList)): #Goes through all indexes of productList
-        for j in range(len(fileList)): #Goes through all indexes of fileList, if doesn't enter if statement'
-            if productList[i] == fileList[j][0]: #Item in productList appears in file, so add to finalList
+    # Iterate through product list and add each product's info to final list
+    for i in range (len(productList)): # Goes through all indexes of productList
+        for j in range(len(fileList)): # Goes through all indexes of fileList, if doesn't enter if statement'
+            if productList[i] == fileList[j][0]: # Item in productList appears in file, so add to finalList
                 finalList.append(fileList[j])
                 break
-            if j == 5: #If j gets to 5 then product doesn't appear in file because have only 6 products in file
-                print(f"WARNING! We don't sell {productList[i]}'s. Only scan items that are sold in products.csv.")
+            if j == 5: # If j gets to 5 then product doesn't appear in file because have only 6 products in file
+                print(f"WARNING! We don't sell {productList[i]}s. Only scan items that are sold in products.csv.")
 
+    # Return final list with products and their prices
     return finalList
+
+
 
 ##
 def complete_order():
@@ -159,13 +174,13 @@ def complete_order():
     """
     pass
 
+
+
 ##
 def customer_summary(userid: str):
     """
-    Prints the order history of <userid> from orders.csv.
-    prints off the userid, number of orders, total cost, and
-    the number of each product they have ordered, formatted in 
-    a receipt.
+    - Prints the order history of <userid> from orders.csv.
+    - Prints off the userid, number of orders, total cost, and the number of each product they have ordered, formatted in a receipt.
     """
     s = f"" # this is a output string
     total_cost = 0 # total money spent
@@ -175,7 +190,7 @@ def customer_summary(userid: str):
     filename = "orders.csv" # name of file
 
     try:
-        f = open(filename, 'r') # trys to open the file (if exists)
+        f = open(filename, 'r') # tries to open the file (if exists)
     except:
         # error is thrown if file doesn't exist
         print("File not found, unable to retrieve order history")
@@ -212,6 +227,9 @@ def customer_summary(userid: str):
         s += "===================================\n"
         print(s)
 
+
+
+##
 def pack_products(products_list):
     """
     """
@@ -278,6 +296,6 @@ def main():
     customer_summary(userid)
 
 def scan_barcode():
-    return ""
+    return "Sponge Bottle"
 
 main()
