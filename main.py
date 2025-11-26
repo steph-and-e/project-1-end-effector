@@ -1,10 +1,136 @@
 # import modules
-import time
 import bcrypt
+import random
+from time import sleep
+import sys
+sys.path.append("../")
+
+# Toggle qArm mode on and off
+qArm = False # Change to True when testing with Q-Arm
+
+# Q-arm setup
+if qArm:
+    from Common.qarm_interface_wrapper import *
+    GRIPPER_IMPLEMENTATION = 1
+    arm = QArmInterface(GRIPPER_IMPLEMENTATION)
+    scan_barcode = BarcodeScanner.scan_barcode
 
 
 
-## HELPER FUNCTION
+## PICK UP SPONGE FUNCTION
+def pick_up_sponge():
+    """
+    """
+    arm.home()
+    arm.rotate_base(16)
+    arm.rotate_elbow(-22)
+    arm.rotate_gripper(13)
+    arm.rotate_shoulder(55)
+    sleep(1)
+    arm.rotate_gripper(-13)
+    arm.rotate_shoulder(-50)
+    arm.home()
+
+
+
+## PICK UP BOTTLE FUNCTION
+def pick_up_bottle():
+    """
+    """
+    arm.home()
+    arm.rotate_base(9)
+    arm.rotate_elbow(-17)
+    arm.rotate_gripper(10)
+    arm.rotate_shoulder(53)
+    sleep(1)
+    arm.rotate_gripper(-10)
+    arm.rotate_shoulder(-53)
+    arm.home()
+
+
+
+## PICK UP CHESS FUNCTION
+def pick_up_chess():
+    """
+    """
+    arm.home()
+    arm.rotate_base(3)
+    arm.rotate_elbow(-17)
+    arm.rotate_gripper(11)
+    arm.rotate_shoulder(57)
+    sleep(1)
+    arm.rotate_gripper(-11)
+    arm.rotate_shoulder(-57)
+    arm.home()
+
+
+
+## PICK UP DICE FUNCTION
+def pick_up_dice():
+    """
+    """
+    arm.home()
+    arm.rotate_base(-4)
+    arm.rotate_elbow(-14)
+    arm.rotate_gripper(13)
+    arm.rotate_shoulder(55)
+    sleep(1)
+    arm.rotate_gripper(-13)
+    arm.rotate_shoulder(-55)
+    arm.home()
+
+
+
+## PICK UP CONE FUNCTION
+def pick_up_cone():
+    """
+    """
+    arm.home()
+    arm.rotate_base(-10)
+    arm.rotate_elbow(-17)
+    arm.rotate_gripper(5)
+    arm.rotate_shoulder(55)
+    sleep(1)
+    arm.rotate_gripper(-5)
+    arm.rotate_shoulder(-55)
+    arm.home()
+
+
+
+## PICK UP BOWL FUNCTION
+def pick_up_bowl():
+    """
+    """
+    arm.home()
+    arm.rotate_base(-18)
+    arm.rotate_elbow(-17)
+    arm.rotate_gripper(13)
+    arm.rotate_shoulder(55)
+    sleep(1)
+    arm.rotate_gripper(-13)
+    arm.rotate_shoulder(-55)
+    arm.home()
+
+
+
+## DROP OFF OBJECT FUNCTION
+def drop_off_object():
+    """
+    """
+    arm.home()
+    arm.rotate_base (-60)
+    arm.rotate_elbow(40)
+    arm.rotate_shoulder(15)
+    sleep(0.5)
+    arm.rotate_gripper(25)
+    sleep(0.5)
+    arm.rotate_gripper(-25)
+    arm.rotate_shoulder(-15)
+    arm.home()
+
+
+
+## PRINT COLOUR FUNCTION
 def print_colour(colour, text):
     """
     Helper function that prints to the screen with a specified colour
@@ -72,6 +198,7 @@ def sign_up():
 ## AUTHENTICATE FUNCTION
 def authenticate():
     """
+    Author: Stephanie Li, li3424
     - Logs the user in, creating an account first if needed.
     - Prompts the user for userid and password, then checks them against bcrypt-hashed passwords in users.csv.
       Repeats until valid credentials are entered.
@@ -87,7 +214,7 @@ def authenticate():
     # If user does not have an account, redirect them to sign up
     if has_account == "N":
         print("Redirecting to sign up...")
-        time.sleep(1)
+        sleep(1)
         sign_up()
         print_colour("blue", "\n\n\nAUTHENTICATION") # show user when they return to Authenticate
 
@@ -161,22 +288,70 @@ def lookup_products(productNames):
                 finalList.append(fileList[j])
                 break
             if j == 5: # If j gets to 5 then product doesn't appear in file because have only 6 products in file
-                print(f"WARNING! We don't sell {productList[i]}s. Only scan items that are sold in products.csv.")
+                print_colour("red", f"WARNING! We don't sell {productList[i]}s. Only scan items that are sold in products.csv.")
 
     # Return final list with products and their prices
     return finalList
 
 
 
-##
-def complete_order():
-    """
-    """
-    pass
+## COMPLETE ORDER FUNCTION
+def complete_order(userID, product_list):
+    """ This function takes the userID and product_list that the user is buying and outputs it in a receipt format (with the prices, total, discount and tax), while updating the file order.csv"""
+
+    total = 0
+    user_cart = []
+    num_orders = 0
+    receipt = "Warehouse".center(50) + "\n" + "-"*50 + "\n" + "-"*50 + "\n" + "Items:"
+
+    file = open("orders.csv", "a")
+    #open file to append something to the already existing file
+
+    for i in range(len(product_list)):
+        # Product_list is a list from the lookup_products function
+        total += product_list[i][1]
+        # Add up the total price of the items in the list [[name, price][name, price]]
+        user_cart.append(product_list[i][0])
+        # Adds the item name to the list for return later
+        price = f"${product_list[i][1]:.2f}"
+        receipt += f"\n{product_list[i][0]:<44}{price}"
+        # includes the item into the reciept in a nice way
+
+    file2 = open("orders.csv")
+    count = 0
+    for line in file2:
+        line = line.split(",")
+        if userID == line[0]:
+            count += 1
+        # How many orders has this user made so far
+    file2.close()
+
+    ## Calculations
+    subtotal = total
+    discount = -(total * (random.randint(5, 50)/100))
+    subtotal2 = subtotal + discount
+    HST = subtotal*0.13
+    total = subtotal + discount + HST
+
+    fsubtotal = f"${subtotal:.2f}"
+    fdiscount = f"${discount:.2f}"
+    fsubtotal2 = f"${subtotal2:.2f}"
+    fHST = f"${HST:.2f}"
+    ftotal = f"${total:.2f}"
+
+    divider = "-"*50
+    receipt += f"\n{divider}\nSubtotal{fsubtotal:>42}\nDiscount{fdiscount:>42}\nSubtotal{fsubtotal2:>42}\nHST{fHST:>47}\n{divider}\n{divider}\nTotal{ftotal:>45}"
+    # The receipt format - for the subtotal, discount(percentage not listed, just the amount that is discounted), tax (HST), and total
+    print(f"{receipt}\n{userID} has made {count} orders so far")
+
+    ## Write into order.csv
+    order = [userID, str(round(total, 2))] + user_cart
+    file.write(",".join(order) + "\n") # add the order to orders.csv - converts everything to a string (appears in individual boxes in excel)
+    file.close()
 
 
 
-##
+## CUSTOMER SUMMARY FUNCTION
 def customer_summary(userid: str):
     """
     - Prints the order history of <userid> from orders.csv.
@@ -229,7 +404,7 @@ def customer_summary(userid: str):
 
 
 
-##
+## PACK PRODUCTS FUNCTION
 def pack_products(products_list):
     """
     """
@@ -239,21 +414,41 @@ def pack_products(products_list):
         product_name = product_row[0]
         # Execute appropriate Q-arm movements depending on product
         if product_name == "Sponge":
+            if qArm:
+                pick_up_sponge()
+                drop_off_object()
             print_colour("green", "Successfully packed Sponge!")
         elif product_name == "Bottle":
+            if qArm:
+                pick_up_bottle()
+                drop_off_object()
             print_colour("green", "Successfully packed Bottle!")
         elif product_name == "Rook":
+            if qArm:
+                pick_up_chess()
+                drop_off_object()
             print_colour("green", "Successfully packed Rook!")
         elif product_name == "D12":
+            if qArm:
+                pick_up_dice()
+                drop_off_object()
             print_colour("green", "Successfully packed D12!")
         elif product_name == "Bowl":
+            if qArm:
+                pick_up_bowl()
+                drop_off_object()
             print_colour("green", "Successfully packed Bowl!")
         elif product_name == "WitchHat":
+            if qArm:
+                pick_up_cone()
+                drop_off_object()
             print_colour("green", "Successfully packed WitchHat!")
         else:
             print_colour("red", f"{product_name} not in directory!")
 
 
+
+## MAIN FUNCTION
 def main():
     """
     g.	main(): (team function) this function runs the entire warehouse ordering system. It begins by welcoming the user, then calls authenticate() to log them in and/or sign them up. If then allows the user to place as many orders as they like by scanning bar codes. It uses lookup_products() to find prices for scanned products, then calls pack_products() to load them with the Q-Arm and complete_order() to finalize payment and store the order. When the user is finished filling orders, it prints the customer_summary().
@@ -274,28 +469,28 @@ def main():
         print("[1] Order Items")
         print("[2] Quit")
         try:
-            userChoice = int(input(""))
+            userChoice = int(input("What would you like to do (1, 2)?: "))
         except TypeError:
            print("Please enter the number corresponding to the option :D")
         else:
             if userChoice == 1:
-                print("please scan a barcode...")
-                orderString = scan_barcode() #TODO: Change to proper function
+                print_colour("blue", "\n\n\nORDER ITEMS")
+                print("Please scan a barcode:")
+                if qArm:
+                    orderString = input(scan_barcode())
+                else:
+                    orderString = input()
                 orderList = lookup_products(orderString) #TODO: Change to proper function
                 pack_products(orderList)#TODO: Change to proper function
-                #y
-                # complete_order(userid, orderList)#TODO: Change to proper function
+                complete_order(userid, orderList)#TODO: Change to proper function
             elif userChoice == 2:
                 # user chooses to exit
-                print("quitting warehouse program...")
+                print("Quitting warehouse program...")
+                sleep(1)
                 shouldContinue = False
             else:
-                print("You didn't enter a valid number, please try again") 
+                print("You didn't enter a valid number. Please try again.") 
         
-    print("Thank you for using our warehouse system :D")
     customer_summary(userid)
-
-def scan_barcode():
-    return "Sponge Bottle"
 
 main()
