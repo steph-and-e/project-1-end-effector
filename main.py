@@ -297,15 +297,18 @@ def lookup_products(productNames):
 
 ## COMPLETE ORDER FUNCTION
 def complete_order(userID, product_list):
-    """ This function takes the userID and product_list that the user is buying and outputs it in a receipt format (with the prices, total, discount and tax), while updating the file order.csv"""
+    """
+    - Takes the userID and product_list that the user is buying 
+    - Outputs product info in a receipt format (with the prices, total, discount and tax)
+    - Updates order.csv
+    """
 
     total = 0
     user_cart = []
     num_orders = 0
-    receipt = "Warehouse".center(50) + "\n" + "-"*50 + "\n" + "-"*50 + "\n" + "Items:"
+    receipt = "\n" + "Warehouse".center(50) + "\n" + "-"*50 + "\n" + "-"*50 + "\n" + "Items:"
 
-    file = open("orders.csv", "a")
-    #open file to append something to the already existing file
+    file = open("orders.csv", "a") # Append mode: appends rows to already existing file
 
     for i in range(len(product_list)):
         # Product_list is a list from the lookup_products function
@@ -317,12 +320,16 @@ def complete_order(userID, product_list):
         receipt += f"\n{product_list[i][0]:<44}{price}"
         # includes the item into the reciept in a nice way
 
+    ## Write into order.csv
+    order = [userID, str(round(total, 2))] + user_cart
+    file.write(",".join(order) + "\n") # add the order to orders.csv - converts everything to a string (appears in individual boxes in excel)
+    file.close()
+
     file2 = open("orders.csv")
-    count = 0
     for line in file2:
         line = line.split(",")
         if userID == line[0]:
-            count += 1
+            num_orders += 1
         # How many orders has this user made so far
     file2.close()
 
@@ -342,12 +349,7 @@ def complete_order(userID, product_list):
     divider = "-"*50
     receipt += f"\n{divider}\nSubtotal{fsubtotal:>42}\nDiscount{fdiscount:>42}\nSubtotal{fsubtotal2:>42}\nHST{fHST:>47}\n{divider}\n{divider}\nTotal{ftotal:>45}"
     # The receipt format - for the subtotal, discount(percentage not listed, just the amount that is discounted), tax (HST), and total
-    print(f"{receipt}\n{userID} has made {count} orders so far")
-
-    ## Write into order.csv
-    order = [userID, str(round(total, 2))] + user_cart
-    file.write(",".join(order) + "\n") # add the order to orders.csv - converts everything to a string (appears in individual boxes in excel)
-    file.close()
+    print(f"{receipt}\n{userID} has made {num_orders} orders so far")
 
 
 
@@ -357,6 +359,8 @@ def customer_summary(userid: str):
     - Prints the order history of <userid> from orders.csv.
     - Prints off the userid, number of orders, total cost, and the number of each product they have ordered, formatted in a receipt.
     """
+    print_colour("blue", "\n\n\nCUSTOMER SUMMARY")
+
     s = f"" # this is a output string
     total_cost = 0 # total money spent
     num_of_orders = 0 # total number of orders
@@ -465,13 +469,13 @@ def main():
     shouldContinue = True
     while shouldContinue:
         # Display Menu
-        print_colour("blue", "\n\n\nWELCOME TO THE WAREHOUSE!")
+        print_colour("blue", "\n\n\nWAREHOUSE MENU")
         print("[1] Order Items")
         print("[2] Quit")
         try:
-            userChoice = int(input("What would you like to do (1, 2)?: "))
-        except TypeError:
-           print("Please enter the number corresponding to the option :D")
+            userChoice = int(input("What would you like to do? [1, 2]: "))
+        except ValueError:
+           print("That is not a valid oprion! Please enter the number corresponding to the option :D")
         else:
             if userChoice == 1:
                 print_colour("blue", "\n\n\nORDER ITEMS")
