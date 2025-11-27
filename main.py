@@ -1,4 +1,18 @@
-# import modules
+"""
+This is a Python-based order processing system for a warehouse for ENGINEER 1P13 Project 1.
+The system allows users to sign into the system, packs scanned products using a Q-arm,
+updates a products and orders database, and prints an order summary when finished.
+
+Jordan Sung - Sungy4
+Stephanie Li - Li3424
+Rachel Roberts - Roberr28
+Evelyn Liu - Liu2906
+Inuka Silva - Silvag6
+
+ENGINEER 1P13, Team TUES-21, 2025
+"""
+
+# Import modules
 import bcrypt
 import random
 from time import sleep
@@ -20,6 +34,12 @@ if qArm:
 ## PICK UP SPONGE FUNCTION
 def pick_up_sponge():
     """
+    Executes Q-arm movements to pick up the sponge
+    - Parameters: None
+    - Input: None
+    - Output: None
+    - Return: None
+    Author(s): Jordan Sung (Sungy4), Rachel Roberts (Roberr28)
     """
     arm.home()
     arm.rotate_base(16)
@@ -36,6 +56,12 @@ def pick_up_sponge():
 ## PICK UP BOTTLE FUNCTION
 def pick_up_bottle():
     """
+    Executes Q-arm movements to pick up the bottle
+    - Parameters: None
+    - Input: None
+    - Output: None
+    - Return: None
+    Author(s): Jordan Sung (Sungy4), Rachel Roberts (Roberr28)
     """
     arm.home()
     arm.rotate_base(9)
@@ -52,6 +78,12 @@ def pick_up_bottle():
 ## PICK UP CHESS FUNCTION
 def pick_up_chess():
     """
+    Executes Q-arm movements to pick up the rook
+    - Parameters: None
+    - Input: None
+    - Output: None
+    - Return: None
+    Author(s): Jordan Sung (Sungy4), Rachel Roberts (Roberr28)
     """
     arm.home()
     arm.rotate_base(3)
@@ -68,6 +100,12 @@ def pick_up_chess():
 ## PICK UP DICE FUNCTION
 def pick_up_dice():
     """
+    Executes Q-arm movements to pick up the D12
+    - Parameters: None
+    - Input: None
+    - Output: None
+    - Return: None
+    Author(s): Jordan Sung (Sungy4), Rachel Roberts (Roberr28)
     """
     arm.home()
     arm.rotate_base(-4)
@@ -84,6 +122,12 @@ def pick_up_dice():
 ## PICK UP CONE FUNCTION
 def pick_up_cone():
     """
+    Executes Q-arm movements to pick up the witch hat
+    - Parameters: None
+    - Input: None
+    - Output: None
+    - Return: None
+    Author(s): Jordan Sung (Sungy4), Rachel Roberts (Roberr28)
     """
     arm.home()
     arm.rotate_base(-10)
@@ -100,6 +144,12 @@ def pick_up_cone():
 ## PICK UP BOWL FUNCTION
 def pick_up_bowl():
     """
+    Executes Q-arm movements to pick up the bowl
+    - Parameters: None
+    - Input: None
+    - Output: None
+    - Return: None
+    Author(s): Jordan Sung (Sungy4), Rachel Roberts (Roberr28)
     """
     arm.home()
     arm.rotate_base(-18)
@@ -116,6 +166,12 @@ def pick_up_bowl():
 ## DROP OFF OBJECT FUNCTION
 def drop_off_object():
     """
+    Executes Q-arm movements to drop off objects in the packing basket
+    - Parameters: None
+    - Input: None
+    - Output: None
+    - Return: None
+    Author(s): Jordan Sung (Sungy4), Rachel Roberts (Roberr28)
     """
     arm.home()
     arm.rotate_base (-60)
@@ -134,6 +190,11 @@ def drop_off_object():
 def print_colour(colour, text):
     """
     Helper function that prints to the screen with a specified colour
+    - Parameters: Colour, text to print
+    - Input: None
+    - Output: Text in specified colour
+    - Return: None
+    Author(s): Stephanie Li (Li3424)
     """
     colours = {"black":30, "red":31, "green":32, "yellow":33, "blue":34, "magenta":35, "cyan":36, "white":37}
     colour_id = colours[colour]
@@ -145,6 +206,12 @@ def print_colour(colour, text):
 ## SIGN UP FUNCTION
 def sign_up():
     """
+    Creates a new user account and logs the userid and hashed password in users.csv
+    - Parameters: None
+    - Input: User credentials, users.csv
+    - Output: Writes a new line to users.csv
+    - Return: None
+    Author(s): Jordan Sung (Sungy4)
     """
     print_colour("blue", "\n\n\nSIGN UP")
 
@@ -156,16 +223,19 @@ def sign_up():
         password = input("Enter a new password: ").strip()
 
         # Check if userid already exists
-        file = open("users.csv", "r")
-        existing_users = []
-        for line in file:
-            row = line.split(",")
-            stored_userid = row[0]
-            existing_users.append(stored_userid)
-        if userid in existing_users:
-            print_colour("red", "UserID already exists. Please try again.\n")
-            continue # skip remaining code, go back to beginning of while loop
-        file.close()
+        try:
+            file = open("users.csv", "r")
+            existing_users = []
+            for line in file:
+                row = line.split(",")
+                stored_userid = row[0]
+                existing_users.append(stored_userid)
+            if userid in existing_users:
+                print_colour("red", "UserID already exists. Please try again.\n")
+                continue # skip remaining code, go back to beginning of while loop
+            file.close()
+        except: # if file does not exist, userid does not already exist
+            pass
 
         # Check password length
         if len(password) < 6:
@@ -198,11 +268,12 @@ def sign_up():
 ## AUTHENTICATE FUNCTION
 def authenticate():
     """
-    Author: Stephanie Li, li3424
-    - Logs the user in, creating an account first if needed.
-    - Prompts the user for userid and password, then checks them against bcrypt-hashed passwords in users.csv.
-      Repeats until valid credentials are entered.
-    - Returns: userid upon successful login
+    Logs the user in, creating an account first if needed
+    - Parameters: None
+    - Input: User credentials, users.csv;
+    - Output: Success or failure messages
+    - Return: userid (string) upon successful authentication
+    Author(s): Stephanie Li (Li3424)
     """
     print_colour("blue", "\n\n\nAUTHENTICATION")
 
@@ -259,9 +330,12 @@ def authenticate():
 ## LOOKUP PRODUCTS FUNCTION
 def lookup_products(productNames):
     """
-    - Reads products.csv, and compares it to a string of scanned items it recieves from a user.
-    - Prints a warning message if item scanned is not in products.csv
-    - Returns a list of product names with their prices that match the scanned string
+    Compares a string of scanned items to products.csv and returns a 2D list of products with their prices
+    - Parameters: products (string of product names)
+    - Input: products.csv
+    - Output: Warning message when product not found
+    - Return: 2D list of products: [[name, price], ...
+    Author(s): Rachel Roberts (Roberr28)
     """
 
     # Initialize empty lists
@@ -298,9 +372,12 @@ def lookup_products(productNames):
 ## COMPLETE ORDER FUNCTION
 def complete_order(userID, product_list):
     """
-    - Takes the userID and product_list that the user is buying 
-    - Outputs product info in a receipt format (with the prices, total, discount and tax)
-    - Updates order.csv
+    Outputs product info in a receipt format and updates orders.csv
+    - Parameters: userid (string), product_list (2D list of [[name, price], ...])
+    - Input: None
+    - Output: Printed invoice and order summary; updates orders.csv with new order
+    - Return: None
+    Author(s): Evelyn Liu (Liu2906)
     """
 
     total = 0
@@ -356,8 +433,12 @@ def complete_order(userID, product_list):
 ## CUSTOMER SUMMARY FUNCTION
 def customer_summary(userid: str):
     """
-    - Prints the order history of <userid> from orders.csv.
-    - Prints off the userid, number of orders, total cost, and the number of each product they have ordered, formatted in a receipt.
+    Prints the order history of the user from orders.csv in a receipt format
+    - Parameters: userid (string)
+    - Input: orders.csv
+    - Output: Printed order history summary
+    - Return: None
+    Author(s): Inuka Silva (Silvag6)
     """
     print_colour("blue", "\n\n\nCUSTOMER SUMMARY")
 
@@ -411,6 +492,12 @@ def customer_summary(userid: str):
 ## PACK PRODUCTS FUNCTION
 def pack_products(products_list):
     """
+    Executes Q-arm movements to pick up and drop off each product in the product list
+    - Parameters: product_list (2D list of products [[name, price], ...])
+    - Input: None
+    - Output: Q-Arm motor commands. Printed messages confirming each product packed.
+    - Return: None
+    Author: Stephanie Li (Li3424)
     """
     # Iterate through product list
     for product_row in products_list:
@@ -455,12 +542,12 @@ def pack_products(products_list):
 ## MAIN FUNCTION
 def main():
     """
-    g.	main(): (team function) this function runs the entire warehouse ordering system. It begins by welcoming the user, then calls authenticate() to log them in and/or sign them up. If then allows the user to place as many orders as they like by scanning bar codes. It uses lookup_products() to find prices for scanned products, then calls pack_products() to load them with the Q-Arm and complete_order() to finalize payment and store the order. When the user is finished filling orders, it prints the customer_summary().
-    i.	Parameters: None
-    ii.	Input: User input, barcode scanner input.
-    iii.	Output: Printed messages from authentication, invoices, summaries, and Q-Arm actions
-    iv.	Return Value: None
-
+    Runs the entire warehouse ordering system in a loop until user decides to exit
+    - Parameters: None
+    - Input: User input, barcode scanner input
+    - Output: Printed messages from authentication, invoices, summaries, and Q-Arm actions
+    - Return: None
+    Author(s): Inuka Silva (Silvag6)
     """
     # Get userid from authenticate function
     userid = authenticate()
@@ -475,7 +562,7 @@ def main():
         try:
             userChoice = int(input("What would you like to do? [1, 2]: "))
         except ValueError:
-           print("That is not a valid oprion! Please enter the number corresponding to the option :D")
+           print("That is not a valid option! Please enter the number corresponding to the option :D")
         else:
             if userChoice == 1:
                 print_colour("blue", "\n\n\nORDER ITEMS")
@@ -484,9 +571,12 @@ def main():
                     orderString = input(scan_barcode())
                 else:
                     orderString = input()
-                orderList = lookup_products(orderString) #TODO: Change to proper function
-                pack_products(orderList)#TODO: Change to proper function
-                complete_order(userid, orderList)#TODO: Change to proper function
+                print("Processing order...\n")
+                sleep(1)
+                orderList = lookup_products(orderString)
+                pack_products(orderList)
+                sleep(1)
+                complete_order(userid, orderList)
             elif userChoice == 2:
                 # user chooses to exit
                 print("Quitting warehouse program...")
